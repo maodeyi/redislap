@@ -1,6 +1,5 @@
-Java redislap tool
-Support jedis currently
-============================
+Java redislap tool, support jedis currently
+============================================
    
 Getting started. 
 

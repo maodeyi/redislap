@@ -1,6 +1,7 @@
 package com.letv.redis.benchmark.jedis;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,12 +9,12 @@ import java.util.concurrent.CyclicBarrier;
 
 public class ReadThread extends Thread {
 
-    protected Jedis jedis;
+    protected JedisPool pool;
     protected CyclicBarrier barrier;
     private Map<String, Long> costMapPerThread;
 
-    public ReadThread(Jedis jedis, CyclicBarrier barrier) {
-        this.jedis = jedis;
+    public ReadThread(JedisPool pool, CyclicBarrier barrier) {
+        this.pool = pool;
         this.barrier = barrier;
     }
 
@@ -22,7 +23,7 @@ public class ReadThread extends Thread {
         try {
             barrier.await();
 
-            this.setCostMapPerThread(getKey(jedis, Cli.repeatCount));
+            this.setCostMapPerThread(getKey(pool, Cli.repeatCount));
 
             barrier.await();
         } catch (Exception e) {
@@ -30,8 +31,10 @@ public class ReadThread extends Thread {
         }
     }
 
-    private Map<String, Long> getKey(Jedis jedis,
+    private Map<String, Long> getKey(JedisPool pool,
                                      int repeats) {
+
+        Jedis jedis = pool.getResource();
 
         long avgGetCostPerThread = 0;
         long maxGetCostPerThread = Long.MIN_VALUE;
@@ -52,6 +55,10 @@ public class ReadThread extends Thread {
             minGetCostPerThread = minGetCostPerThread < estimatedTime ? minGetCostPerThread
                     : estimatedTime;
 
+        }
+
+        if (jedis != null) {
+            pool.returnResource(jedis);
         }
 
         costMapPerThread.put("avgGetCostPerThread", avgGetCostPerThread);

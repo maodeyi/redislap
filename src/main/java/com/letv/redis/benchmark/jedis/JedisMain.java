@@ -21,7 +21,6 @@ public class JedisMain {
         config.setMaxTotal(Cli.connCount);
 
         JedisPool pool = new JedisPool(config, Cli.host, Integer.valueOf(Cli.port), Cli.opTimeout);
-        Jedis jedis = pool.getResource();
 
         NumberFormat numberFormat = NumberFormat.getInstance();
 
@@ -31,7 +30,7 @@ public class JedisMain {
             System.out.println("JedisMain setkey startup");
 
             long startTime = System.nanoTime();
-            Map<String, Long> costMap = setKey(jedis, Cli.bytes,
+            Map<String, Long> costMap = setKey(pool, Cli.bytes,
                     Cli.threadCount, Cli.repeatCount);
             long estimatedTime = System.nanoTime() - startTime;
 
@@ -55,7 +54,7 @@ public class JedisMain {
             ArrayList<Thread> threadList = new ArrayList<>();
 
             for (int i = 0; i < Cli.threadCount; i++) {
-                threadList.add(new ReadThread(jedis, barrier));
+                threadList.add(new ReadThread(pool, barrier));
             }
 
             for (int j = 0; j < threadList.size(); j++) {
@@ -97,12 +96,13 @@ public class JedisMain {
 
         }
 
-        jedis.close();
+        pool.close();
     }
 
-    public static Map<String, Long> setKey(Jedis jedis,
+    public static Map<String, Long> setKey(JedisPool pool,
                                            int length, int threads, int repeats) {
 
+        Jedis jedis = pool.getResource();
         long avgSetCost = 0;
         long maxSetCost = Long.MIN_VALUE;
         long minSetCost = Long.MAX_VALUE;
@@ -124,6 +124,10 @@ public class JedisMain {
             minSetCost = minSetCost < estimatedTime ? minSetCost
                     : estimatedTime;
 
+        }
+
+        if (jedis != null) {
+            pool.returnResource(jedis);
         }
 
         costMap.put("avgSetCost", avgSetCost);

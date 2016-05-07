@@ -40,7 +40,7 @@ public class Cli {
         options.addOption("opTimeout", "operation timeout", true,
                 "Specifies set or get operation timeout.");
         options.addOption("enableCluster", "enable Cluster", true,
-                "Specifies enableCluster or not.");
+                "Specifies true or false.");
     }
 
     public void parse() {

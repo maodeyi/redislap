@@ -17,6 +17,7 @@ public class Cli {
     public static int connCount;
     public static String operation;
     public static int opTimeout;
+    public static boolean enableCluster;
 
     public Cli(String[] args) {
 
@@ -38,6 +39,8 @@ public class Cli {
                 "Specifies set or get operation.");
         options.addOption("opTimeout", "operation timeout", true,
                 "Specifies set or get operation timeout.");
+        options.addOption("enableCluster", "enable Cluster", true,
+                "Specifies enableCluster or not.");
     }
 
     public void parse() {
@@ -120,6 +123,16 @@ public class Cli {
                 opTimeout = Integer.valueOf(cmd.getOptionValue("opTimeout"));
             } else {
                 log.log(Level.SEVERE, "Missing opTimeout option");
+                help();
+            }
+
+            if (cmd.hasOption("enableCluster")) {
+                log.log(Level.INFO,
+                        "Using cli argument -enableCluster="
+                                + cmd.getOptionValue("enableCluster"));
+                enableCluster = Boolean.valueOf(cmd.getOptionValue("enableCluster"));
+            } else {
+                log.log(Level.SEVERE, "Missing enableCluster option");
                 help();
             }
 

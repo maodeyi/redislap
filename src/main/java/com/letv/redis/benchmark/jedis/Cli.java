@@ -13,7 +13,8 @@ public class Cli {
     public static String port;
     public static int threadCount;
     public static int repeatCount;
-    public static int bytes;
+    public static int value_bytes;
+    public static int key_bytes;
     public static int connCount;
     public static String operation;
     public static int opTimeout;
@@ -29,6 +30,8 @@ public class Cli {
         options.addOption("p", "port", true,
                 "Specifies a port number to contact.");
         options.addOption("t", "thread", true, "Specifies thread count to run.");
+        options.addOption("kl", "key length", true, "key length.");
+        options.addOption("vl", "value length", true, "value length.");
         options.addOption("r", "repeat", true,
                 "Specifies repeat count per thread.");
         options.addOption("b", "byte", true,
@@ -89,12 +92,20 @@ public class Cli {
                 help();
             }
 
-            if (cmd.hasOption("b")) {
+            if (cmd.hasOption("vl")) {
                 log.log(Level.INFO,
-                        "Using cli argument -b=" + cmd.getOptionValue("b"));
-                bytes = Integer.valueOf(cmd.getOptionValue("b"));
+                        "Using cli argument -vl=" + cmd.getOptionValue("vl"));
+                value_bytes = Integer.valueOf(cmd.getOptionValue("vl"));
             } else {
-                log.log(Level.SEVERE, "Missing b option");
+                log.log(Level.SEVERE, "Missing vl option");
+                help();
+            }
+            if (cmd.hasOption("kl")) {
+                log.log(Level.INFO,
+                        "Using cli argument -kl=" + cmd.getOptionValue("kl"));
+                key_bytes = Integer.valueOf(cmd.getOptionValue("kl"));
+            } else {
+                log.log(Level.SEVERE, "Missing kl option");
                 help();
             }
 

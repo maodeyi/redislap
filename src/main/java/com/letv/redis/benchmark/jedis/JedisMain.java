@@ -1,5 +1,4 @@
 package com.letv.redis.benchmark.jedis;
-
 import com.letv.redis.benchmark.common.Constants;
 import com.letv.redis.benchmark.common.StringGenerator;
 import redis.clients.jedis.*;
@@ -25,25 +24,51 @@ public class JedisMain {
             JedisCluster jedisCluster = new JedisCluster(jedisClusterNodes, Cli.opTimeout, config);
 
             if (Cli.operation.equals("set")) {
-                System.out.println("JedisMain setkey startup");
+            	 System.out.println("JedisMain setkey startup");
 
-                long startTime = System.nanoTime();
-                Map<String, Long> costMap = setKey(jedisCluster, Cli.bytes,
-                        Cli.threadCount, Cli.repeatCount);
-                long estimatedTime = System.nanoTime() - startTime;
+                 CyclicBarrier barrier = new CyclicBarrier(Cli.threadCount + 1);
+                 ArrayList<Thread> threadList = new ArrayList<>();
 
-                float repeat = Cli.repeatCount;
+                 for (int i = 0; i < Cli.threadCount; i++) {
+                     threadList.add(new WriteThread(jedisCluster, barrier));
+                 }
 
-                System.out.println("JedisMain setkey finish, cost time = "
-                        + estimatedTime + "ns, " + "set count = " + repeat
-                        + ", ops = " + (repeat / estimatedTime) * Constants.seed);
+                 for (int j = 0; j < threadList.size(); j++) {
+                     threadList.get(j).start();
+                 }
 
-                System.out.println("avg set cost time = "
-                        + costMap.get("avgSetCost") + "ns");
-                System.out.println("max set cost time = "
-                        + costMap.get("maxSetCost") + "ns");
-                System.out.println("min set cost time = "
-                        + costMap.get("minSetCost") + "ns");
+                 barrier.await();
+                 long startTime = System.nanoTime();
+                 barrier.await();
+                 long estimatedTime = System.nanoTime() - startTime;
+
+                 float totalRepeat = Cli.repeatCount * Cli.threadCount;
+
+                 System.out.println("JedisMain setkey finish, cost time = "
+                         + estimatedTime + "ns, " + "get count = " + totalRepeat
+                         + ", ops = " + (totalRepeat / estimatedTime)
+                         * Constants.seed);
+
+                 long avgSetCost = 0;
+                 long maxSetCost = Long.MIN_VALUE;
+                 long minSetCost = Long.MAX_VALUE;
+                 long sumSetCost = 0;
+                 Map<String, Long> costMap;
+
+                 for (int m = 0; m < threadList.size(); m++) {
+                     costMap = ((ReadThread) threadList.get(m))
+                             .getCostMapPerThread();
+                     sumSetCost = sumSetCost + costMap.get("avgGetCostPerThread");
+                     avgSetCost = sumSetCost / (m + 1);
+                     maxSetCost = maxSetCost > costMap.get("maxGetCostPerThread") ? maxSetCost
+                             : costMap.get("maxGetCostPerThread");
+                     minSetCost = minSetCost < costMap.get("minGetCostPerThread") ? minSetCost
+                             : costMap.get("minGetCostPerThread");
+                 }
+
+                 System.out.println("avg set cost time = " + avgSetCost + "ns");
+                 System.out.println("max set cost time = " + maxSetCost + "ns");
+                 System.out.println("min set cost time = " + minSetCost + "ns");
 
             } else if (Cli.operation.equals("get")) {
                 System.out.println("JedisMain getkey startup");
@@ -100,25 +125,51 @@ public class JedisMain {
             JedisPool pool = new JedisPool(config, Cli.host, Integer.valueOf(Cli.port), Cli.opTimeout);
 
             if (Cli.operation.equals("set")) {
-                System.out.println("JedisMain setkey startup");
+            	System.out.println("JedisMain setkey startup");
 
+                CyclicBarrier barrier = new CyclicBarrier(Cli.threadCount + 1);
+                ArrayList<Thread> threadList = new ArrayList<>();
+
+                for (int i = 0; i < Cli.threadCount; i++) {
+                    threadList.add(new WriteThread(pool, barrier));
+                }
+
+                for (int j = 0; j < threadList.size(); j++) {
+                    threadList.get(j).start();
+                }
+
+                barrier.await();
                 long startTime = System.nanoTime();
-                Map<String, Long> costMap = setKey(pool, Cli.bytes,
-                        Cli.threadCount, Cli.repeatCount);
+                barrier.await();
                 long estimatedTime = System.nanoTime() - startTime;
 
-                float repeat = Cli.repeatCount;
+                float totalRepeat = Cli.repeatCount * Cli.threadCount;
 
                 System.out.println("JedisMain setkey finish, cost time = "
-                        + estimatedTime + "ns, " + "set count = " + repeat
-                        + ", ops = " + (repeat / estimatedTime) * Constants.seed);
+                        + estimatedTime + "ns, " + "set count = " + totalRepeat
+                        + ", ops = " + (totalRepeat / estimatedTime)
+                        * Constants.seed);
 
-                System.out.println("avg set cost time = "
-                        + costMap.get("avgSetCost") + "ns");
-                System.out.println("max set cost time = "
-                        + costMap.get("maxSetCost") + "ns");
-                System.out.println("min set cost time = "
-                        + costMap.get("minSetCost") + "ns");
+                long avgSetCost = 0;
+                long maxSetCost = Long.MIN_VALUE;
+                long minSetCost = Long.MAX_VALUE;
+                long sumSetCost = 0;
+                Map<String, Long> costMap;
+
+                for (int m = 0; m < threadList.size(); m++) {
+                    costMap = ((WriteThread) threadList.get(m))
+                            .getCostMapPerThread();
+                    sumSetCost = sumSetCost + costMap.get("avgGetCostPerThread");
+                    avgSetCost = sumSetCost / (m + 1);
+                    maxSetCost = maxSetCost > costMap.get("maxGetCostPerThread") ? maxSetCost
+                            : costMap.get("maxGetCostPerThread");
+                    minSetCost = minSetCost < costMap.get("minGetCost	PerThread") ? minSetCost
+                            : costMap.get("minGetCostPerThread");
+                }
+
+                System.out.println("avg get cost time = " + avgSetCost + "ns");
+                System.out.println("max get cost time = " + maxSetCost + "ns");
+                System.out.println("min get cost time = " + minSetCost + "ns");
 
             } else if (Cli.operation.equals("get")) {
                 System.out.println("JedisMain getkey startup");
@@ -172,79 +223,5 @@ public class JedisMain {
             pool.close();
 
         }
-    }
-
-
-    public static Map<String, Long> setKey(JedisPool pool,
-                                           int length, int threads, int repeats) {
-
-        Jedis jedis = pool.getResource();
-        long avgSetCost = 0;
-        long maxSetCost = Long.MIN_VALUE;
-        long minSetCost = Long.MAX_VALUE;
-        long sumSetCost = 0;
-        Map<String, Long> costMap = new HashMap<>();
-
-        for (int i = 1; i <= repeats; i++) {
-            String key = "redis-check-noc-" + i;
-            String value = StringGenerator.generateValue(i, length);
-
-            long startTime = System.nanoTime();
-            jedis.set(key, value);
-            long estimatedTime = System.nanoTime() - startTime;
-
-            sumSetCost = sumSetCost + estimatedTime;
-            avgSetCost = sumSetCost / i;
-            maxSetCost = maxSetCost > estimatedTime ? maxSetCost
-                    : estimatedTime;
-            minSetCost = minSetCost < estimatedTime ? minSetCost
-                    : estimatedTime;
-
-        }
-
-        if (jedis != null) {
-            pool.returnResource(jedis);
-        }
-
-        costMap.put("avgSetCost", avgSetCost);
-        costMap.put("maxSetCost", maxSetCost);
-        costMap.put("minSetCost", minSetCost);
-
-        return costMap;
-
-    }
-
-    public static Map<String, Long> setKey(JedisCluster jedisCluster,
-                                           int length, int threads, int repeats) {
-
-        long avgSetCost = 0;
-        long maxSetCost = Long.MIN_VALUE;
-        long minSetCost = Long.MAX_VALUE;
-        long sumSetCost = 0;
-        Map<String, Long> costMap = new HashMap<>();
-
-        for (int i = 1; i <= repeats; i++) {
-            String key = "redis-check-noc-" + i;
-            String value = StringGenerator.generateValue(i, length);
-
-            long startTime = System.nanoTime();
-            jedisCluster.set(key, value);
-            long estimatedTime = System.nanoTime() - startTime;
-
-            sumSetCost = sumSetCost + estimatedTime;
-            avgSetCost = sumSetCost / i;
-            maxSetCost = maxSetCost > estimatedTime ? maxSetCost
-                    : estimatedTime;
-            minSetCost = minSetCost < estimatedTime ? minSetCost
-                    : estimatedTime;
-
-        }
-
-        costMap.put("avgSetCost", avgSetCost);
-        costMap.put("maxSetCost", maxSetCost);
-        costMap.put("minSetCost", minSetCost);
-
-        return costMap;
-
     }
 }

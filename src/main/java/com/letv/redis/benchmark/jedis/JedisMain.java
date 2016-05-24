@@ -163,7 +163,7 @@ public class JedisMain {
                     avgSetCost = sumSetCost / (m + 1);
                     maxSetCost = maxSetCost > costMap.get("maxSetCostPerThread") ? maxSetCost
                             : costMap.get("maxSetCostPerThread");
-                    minSetCost = minSetCost < costMap.get("minSetCost	PerThread") ? minSetCost
+                    minSetCost = minSetCost < costMap.get("minSetCostPerThread") ? minSetCost
                             : costMap.get("minSetCostPerThread");
                 }
 

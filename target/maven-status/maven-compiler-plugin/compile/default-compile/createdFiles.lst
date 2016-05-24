@@ -1,0 +1,6 @@
+com\letv\redis\benchmark\jedis\ReadThread.class
+com\letv\redis\benchmark\jedis\Cli.class
+com\letv\redis\benchmark\common\Constants.class
+com\letv\redis\benchmark\jedis\WriteThread.class
+com\letv\redis\benchmark\jedis\JedisMain.class
+com\letv\redis\benchmark\common\StringGenerator.class

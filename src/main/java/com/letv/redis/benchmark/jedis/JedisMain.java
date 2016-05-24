@@ -159,12 +159,12 @@ public class JedisMain {
                 for (int m = 0; m < threadList.size(); m++) {
                     costMap = ((WriteThread) threadList.get(m))
                             .getCostMapPerThread();
-                    sumSetCost = sumSetCost + costMap.get("avgGetCostPerThread");
+                    sumSetCost = sumSetCost + costMap.get("avgSetCostPerThread");
                     avgSetCost = sumSetCost / (m + 1);
-                    maxSetCost = maxSetCost > costMap.get("maxGetCostPerThread") ? maxSetCost
-                            : costMap.get("maxGetCostPerThread");
-                    minSetCost = minSetCost < costMap.get("minGetCost	PerThread") ? minSetCost
-                            : costMap.get("minGetCostPerThread");
+                    maxSetCost = maxSetCost > costMap.get("maxSetCostPerThread") ? maxSetCost
+                            : costMap.get("maxSetCostPerThread");
+                    minSetCost = minSetCost < costMap.get("minSetCost	PerThread") ? minSetCost
+                            : costMap.get("minSetCostPerThread");
                 }
 
                 System.out.println("avg get cost time = " + avgSetCost + "ns");
